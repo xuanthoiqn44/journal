@@ -2,17 +2,20 @@
 
 namespace app\controllers;
 
-use app\models\SendMail;
+use app\commands\Mail;
+use app\models\LoginForm;
 use yii\widgets\ActiveForm;
-use yii\web\Response;
 use Yii;
-use app\models\User;
 use yii\web\Controller;
 use yii\data\Pagination;
 use app\models\RegisterForm;
 use app\models\PasswordResetRequestForm;
 use app\models\ResetPasswordForm;
+use app\models\Users;
 use app\models\VerifyAccount;
+use yii\base\InvalidParamException;
+use yii\web\Request;
+use yii\web\Response;
 
 class AccountController extends Controller
 {
@@ -58,82 +61,73 @@ class AccountController extends Controller
             'pagination' => $pagination,
         ]);
     }
+    /**
+     * Login action.
+     *
+     * @return Response|string
+     */
+    public function actionLogin()
+    {
+        $model = new LoginForm();
+        if (!Yii::$app->user->isGuest) {
+            return $this->goHome();
+        }
+        if ($model->load(Yii::$app->request->post())) {
+            if ($model->login()) {
+                return $this->redirect(Yii::$app->request->referrer);
+            }
+        }
+        $model->password = '';
+        return $this->render('login', [
+            'model' => $model
+        ]);
+    }
     public function actionRegister()
     {
         $model = new RegisterForm();
-        if (Yii::$app->request->isAjax) {
-            try {
-                if ($model->load(Yii::$app->request->post())) {
-                    $user = $model->Register();
-                    if ($user && $model->sendEmail()) {
-                        Yii::$app->session->setFlash('success', 'Please check your email for active account.');
-                        //if (Yii::$app->getUser()->login($user))
-                        {
-                            return $this->goHome();
-                        }
-                    }
-                    else{
-                        Yii::$app->response->format = Response::FORMAT_JSON;
-                        return ActiveForm::validate($model);
-                    }
-                }
-                else{
-                    return $this->renderAjax('_register', [
-                        'model' => $model,
-                    ]);
-                }
-            } catch (InvalidParamException $e) {
-                $this->refresh();
-                //throw new \yii\web\HttpException(404, 'Error');
-            }
-
-        }
-        else{
-            try {
-                if ($model->load(Yii::$app->request->post())) {
-                    if ($user = $model->Register() && $model->sendEmail()) {
-                        Yii::$app->session->setFlash('success', 'Please check your email for active account.');
-                        //if (Yii::$app->getUser()->login($user))
-                        {
-                            return $this->goHome();
-                        }
-                    }
-                    else{
-                        //Yii::$app->response->format = Response::FORMAT_JSON;
-                        //return ActiveForm::validate($model);
-                        return $this->render('register', [
-                            'model' => $model,
-                        ]);
-                    }
-                }
-                else{
-                    return $this->render('register', [
-                        'model' => $model,
-                    ]);
-                }
-            } catch (InvalidParamException $e) {
-                $this->refresh();
-                //throw new \yii\web\HttpException(404, 'Error');
+        if ($model->load(Yii::$app->request->post())) {
+            $user = $model->Register();
+            if ($user) {
+                Yii::$app->queue->push(new Mail([
+                    'to' => $user->EmailID,
+                    'resetLink' => Yii::$app->urlManager->createAbsoluteUrl(['account/verify-account', 'token' => $user->Auth_key]),
+                    'fullName' => $user->FirstName . ' ' . $user->LastName,
+                    'view' => 'verifyAccount-html',
+                    'text' => 'verifyAccount-text',
+                    'subject' => 'Verify account '
+                ]));
+                Yii::$app->session->setFlash('success', 'Please check your email for active account.');
+                //if (Yii::$app->getUser()->login($user))
+                return $this->goHome();
             }
         }
+        return $this->render('register', [
+            'model' => $model,
+        ]);
     }
     /*action reset password*/
     public function actionRequestPasswordReset()
     {
         $model = new PasswordResetRequestForm();
-
         if ($model->load(Yii::$app->request->post()) && $model->validate()) {
-
-            if ($model->sendEmail()) {
-                Yii::$app->session->setFlash('success', 'Check your email for further instructions.');
+            $user = $model->resetPassword();
+            if ($user) {
+                Yii::$app->queue->push(new Mail([
+                    'to' => $user->EmailID,
+                    'resetLink' => Yii::$app->urlManager->createAbsoluteUrl(['account/reset-password', 'token' => $user->Password_reset_token]),
+                    'fullName' => $user->FirstName . ' ' . $user->LastName, 
+                    'view' => 'passwordResetToken-html', 
+                    'text' => 'passwordResetToken-text', 
+                    'subject' => 'Password reset '
+                ]));
+                Yii::$app->session->setFlash('success', \Yii::t('app', 'Check your email for further instructions.'));
                 return $this->refresh();
-                //$this->goHome();
             } else {
-                Yii::$app->session->setFlash('error', 'Sorry, we are unable to reset password for email provided.');
+                Yii::$app->session->setFlash('error', \Yii::t('app', 'Sorry, we are unable to reset password for email provided.'));
+                return $this->refresh();
             }
-
         }
-
+        $model->EmailID = '';
         return $this->render('PasswordResetRequestForm', [
             'model' => $model,
         ]);
@@ -146,42 +140,29 @@ class AccountController extends Controller
      * @return mixed
      * @throws BadRequestHttpException
      */
-    public function actionResetPassword($token)
+    public function actionResetPassword($token = '')
     {
-        try {
-            $model = new ResetPasswordForm($token);
-        } catch (InvalidParamException $e) {
-            //throw new BadRequestHttpException($e->getMessage());
-            //throw new BadRequestHttpException('Token is invalid');
-            //$this->render('site/error');
-            throw new \yii\web\HttpException(404, 'Token is invalid');
+        $model = new ResetPasswordForm($token);
+        if (!$model->isReset) {
+            return $this->goHome();
         }
-
         if ($model->load(Yii::$app->request->post()) && $model->validate() && $model->resetPassword()) {
             Yii::$app->session->setFlash('success', 'New password was saved.');
             return $this->goHome();
         }
-
         return $this->render('resetPasswordForm', [
             'model' => $model]);
       }
 
       /*Verify Account*/
-    public function actionVerifyAccount($token)
+    public function actionVerifyAccount($token = '')
     {
-        try {
-            $model = new VerifyAccount($token);
-        } catch (InvalidParamException $e) {
-            //throw new BadRequestHttpException($e->getMessage());
-            //throw new BadRequestHttpException('Token is invalid');
-            throw new \yii\web\HttpException(404, 'Token is invalid');
+        if ($model = new VerifyAccount($token)) {
+            if ($model->isVerified && $model->AcceptVerify()) {
+                Yii::$app->session->setFlash('success', 'Success to verify account.');
+                return $this->goHome();
+            }
         }
-
-        if ( $model->AcceptVerify()) {
-            Yii::$app->session->setFlash('success', 'Success to verify account.');
-            return $this->goHome();
-        }
-
         return $this->goHome();
     }
 }

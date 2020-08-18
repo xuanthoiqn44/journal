@@ -764,9 +764,6 @@ $('#_order_urgency').text(adddays($('#orderpost-urgency').find(':selected').text
 function adddays(days) {
     days = days.split(' ');
     var date = new Date(Date.now() + days[0] * 24*60*60*1000);
-    //date.setDate(date.now() + days* 24*60*60*1000);
-    //date.format('dd-mm-yyyy');
-    //return date.toString('dd-MMM-yyyy');
     var monthNames = [
         "01", "02", "03",
         "04", "05", "06", "07",

@@ -17,6 +17,7 @@ class VerifyAccount extends Model
      * @var \app\models\User
      */
     private $_user;
+    public $isVerified = true;
 
     /**
      * Creates a form model given a token.
@@ -27,16 +28,9 @@ class VerifyAccount extends Model
      */
     public function __construct($token, $config = [])
     {
-        if (empty($token) || !is_string($token)) {
-            //throw new InvalidParamException('Verify token cannot be blank.');
-            throw new \yii\web\HttpException(404, 'Verify token cannot be blank.');
-        }
-
         $this->_user = User::findByAccountToken($token);
-
         if (!$this->_user) {
-            //throw new InvalidParamException('Wrong verify token.');
-            throw new \yii\web\HttpException(404, 'Wrong verify token.');
+            $this->isVerified = false;
         }
 
         parent::__construct($config);
@@ -62,7 +56,7 @@ class VerifyAccount extends Model
     {
         $user = $this->_user;
         $user->setActive();
-        $user->Auth_key = null;
+        $user->Auth_key = '';
         return $user->save(false);
     }
 

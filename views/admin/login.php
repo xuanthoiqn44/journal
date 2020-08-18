@@ -17,7 +17,7 @@ use yii\bootstrap\ActiveForm;
             <?php $form = ActiveForm::begin(['id' => 'login-form','enableAjaxValidation' => false]); ?>
 
             <span class="login100-form-title p-b-33">
-                        Account Login
+                        Admin Login
                     </span>
             <?= $form->field($model, 'email')->textInput(['autofocus' => true]) ?>
             <?= $form->field($model, 'password')->passwordInput() ?>

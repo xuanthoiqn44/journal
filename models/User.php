@@ -224,6 +224,9 @@ class User extends ActiveRecord implements IdentityInterface
     {
         $this->Password_reset_token = null;
     }
+    public function emailVerify($verified = true) {
+        $this->IsEmailVerified = $verified ? 1 : 0;
+    }
     /*Verify token*/
     public static function findByAccountToken($token)
     {
@@ -237,5 +240,8 @@ class User extends ActiveRecord implements IdentityInterface
     }
     public function getPhoneNumber(){
         return $this->Phone_Number?$this->Phone_Number:'';
+    }
+    public function getFullName(){
+        return $this->FirstName . ' ' . $this->LastName;
     }
 }

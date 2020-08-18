@@ -5,7 +5,8 @@ return [
     'dsn' => 'mysql:host=localhost;dbname=vietyoung',
     //'username' => 'newuser',
     'username' => 'root',
-    'password' => 'iloveVN2018',
+    // 'password' => 'iloveVN2018',
+    'password' => '',
     //'password' => '',
     'charset' => 'utf8',
 

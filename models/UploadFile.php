@@ -8,14 +8,9 @@
 
 namespace app\models;
 use Yii;
-use yii\base\ErrorException;
 use yii\base\Model;
-use yii\db\Exception;
-use yii\helpers\Inflector;
 use app\models\Post;
-use yii\web\UploadedFile;
-use app\models\ServicePrice;
-
+use app\models\User;
 
 class UploadFile extends Model
 {
@@ -32,17 +27,10 @@ class UploadFile extends Model
             //[['upload_file'],'required'],
             [['upload_file','upload_file_editor'], 'safe'],
             [['upload_file'], 'file','extensions' => ['png','jpeg','jpg']],
-            [['upload_file_editor'],'file','extensions' => ['doc','docx']],
-            [['upload_file_editor_completed'],'file','extensions' => ['doc','docx']]
+            [['upload_file_editor'],'file', 'size' => 5000000, 'extensions' => ['doc','docx']],
+            [['upload_file_editor_completed'],'file', 'size' => 5000000, 'extensions' => ['doc','docx']]
          ];
          return array_merge(parent::rules(),$rules);
-       /*return[
-             [['type_of_service','type_of_paper','subject_area','topic','paper_details','academic_level','currency','writer_level','customer_service','method','upload_file',
-                 'urgency'],'required', 'on' => self::SCENARIO_STEP1],
-             ['id_writer','validateId'],
-             [['upload_file'], 'file','extensions' => 'docx',],
-             [['number_of_page','id_writer'],'integer'],
-         ];*/
     }
     public function attributeLabels()
     {
@@ -146,13 +134,11 @@ class UploadFile extends Model
         if(!$upload_file->saveAs('uploads_post/' .$file)){
             $this->addError('myFile','Unable to save the uploaded file');
         }
-        //$this->file = $file;
         return $file;
     }
 
 
     public function PageCount_DOCX($upload_file) {
-        //$pageCount = 0;
 
         $zip = new \ZipArchive();
 
@@ -162,9 +148,7 @@ class UploadFile extends Model
                 $zip->close();
                 $xml = new \SimpleXMLElement($data);
                 $this->pageCount = $xml->Pages;
-                //$this->number_of_page = $pageCount;
             }
-            //$zip->close();
         }
         return $this->pageCount;
     }

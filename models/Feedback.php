@@ -7,11 +7,12 @@
  */
 
 namespace app\models;
+
 use yii\db\ActiveRecord;
 
 class Feedback extends ActiveRecord
 {
-    public  static function FindFeedbackByIdOrder($id)
+    public static function FindFeedbackByIdOrder($id)
     {
         return static::findAll(['Id_order'=>$id]);
     }
@@ -22,5 +23,16 @@ class Feedback extends ActiveRecord
     public function getPost()
     {
         return $this->hasOne(Post::className(), ['id' => 'Id_Order']);
+    }
+    public function getAll() {
+        return static::find();
+    }
+    public static function Pagination($model, $paginate, $with = array(), $where = array()) {
+        return $model
+                ->with($with)
+                ->where($where)
+                ->offset($paginate->offset)
+                ->limit($paginate->limit)
+                ->all();
     }
 }

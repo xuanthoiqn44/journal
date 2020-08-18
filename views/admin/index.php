@@ -15,7 +15,7 @@ $this->title = 'Viet Young';
                                 <i class="fa fa-user"></i>
                             </div>
                             <p class="card-category">User</p>
-                            <h3 class="card-title"><?php echo $count = \app\models\User::find()->count();
+                            <h3 class="card-title"><?php echo $user_total;
                             ?>
                                 <!--<small>GB</small>-->
                             </h3>
@@ -35,7 +35,7 @@ $this->title = 'Viet Young';
                                 <i class="fa fa-edit"></i>
                             </div>
                             <p class="card-category">Posts</p>
-                            <h3 class="card-title"><?php echo $count = \app\models\Post::find()->count();?></h3>
+                            <h3 class="card-title"><?php echo $post_total;?></h3>
                         </div>
                         <div class="card-footer">
                             <div class="stats">
@@ -51,7 +51,7 @@ $this->title = 'Viet Young';
                                 <i class="fa fa-address-book"></i>
                             </div>
                             <p class="card-category">Editor</p>
-                            <h3 class="card-title"><?php echo $count = \app\models\Editor::find()->count();?></h3>
+                            <h3 class="card-title"><?php echo $editor_total;?></h3>
                         </div>
                         <div class="card-footer">
                             <div class="stats">
@@ -67,7 +67,7 @@ $this->title = 'Viet Young';
                                 <i class="fa fa-feed"></i>
                             </div>
                             <p class="card-category">Feedbacks</p>
-                            <h3 class="card-title"><?php echo $count = \app\models\Feedback::find()->count();?></h3>
+                            <h3 class="card-title"><?php echo $feedback_total;?></h3>
                         </div>
                         <div class="card-footer">
                             <div class="stats">

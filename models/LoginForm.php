@@ -34,18 +34,15 @@ class LoginForm extends Model
             ['password', 'validatePassword'],
         ];
         return array_merge(parent::rules(),$rules);
-        /*return [
-            // username and password are both required
-            [['email', 'password'], 'required'],
-            ['email', 'email'],
-            ['email', 'trim'],
-            // rememberMe must be a boolean value
-            ['rememberMe', 'boolean'],
-            // password is validated by validatePassword()
-            //['password','match', 'pattern'=>"/^([a-zA-Z0-9_-]*)$/"],
-            ['password', 'validatePassword'],
-
-        ];*/
+    }
+    public function attributeLabels()
+    {
+        $attribute = [
+            'password' => \Yii::t('app', 'Password'),
+            'email' => \Yii::t('app', 'Email ID'),
+            'rememberMe' => \Yii::t('app', 'remember me'),
+        ];
+        return array_merge(parent::attributeLabels(), $attribute);   
     }
 
     /**
@@ -60,35 +57,18 @@ class LoginForm extends Model
         if (!$this->hasErrors()) {
             $user = $this->getUser();
 
-            if ($user)
+            if (!$user || !$user->validatePassword($this->password) || $user->getRole() != 4)
             {
-                if (!$user->validatePassword($this->password))
-                {
-                    $this->addError($attribute, 'Incorrect email or password.');
-                }
-                else if ($user->getRole() != 4){
-                    $this->addError($attribute, 'Incorrect email or password.');
-                }
-                else if ($user->getActive()===0)
-                {
-                    $this->addError($attribute, 'Please verify email first.');
-                }
-                else if ($user->Status==0)
-                {
-                    $this->addError($attribute, 'Your account is block by admin please contact admin to unlock.');
-                }
+                $this->addError($attribute, \Yii::t('app', 'Incorrect email or password.'));
             }
-            else
+            else if (!$user->getActive())
             {
-                $this->addError($attribute, 'Incorrect email or password.');
+                $this->addError($attribute, \Yii::t('app', 'Please verify email first.'));
             }
-            /*if (!$user || !$user->validatePassword($this->password) || $user->Role != 4) {
-                $this->addError($attribute, 'Incorrect email or password.');
-            }
-            else if ($user->getActive()===0)
+            else if ($user->Status==0)
             {
-                $this->addError($attribute, 'Please verify email first.');
-            }*/
+                $this->addError($attribute, \Yii::t('app', 'Your account has been blocked by admin please contact admin to unlock.'));
+            }
         }
     }
 
@@ -99,10 +79,7 @@ class LoginForm extends Model
     public function login()
     {
         if ($this->validate()) {
-            //if (User::)
-            {
-                return Yii::$app->user->login($this->getUser(), $this->rememberMe ? 3600*24*30 : 0);
-            }
+            return Yii::$app->user->login($this->getUser(), $this->rememberMe ? 3600*24*30 : 0);
 
         }
         return false;
@@ -111,13 +88,12 @@ class LoginForm extends Model
     /**
      * Finds account by [[username]]
      *
-     * @return User|null
+     * @return User|bool
      */
     public function getUser()
     {
         if ($this->_user === false) {
             $this->_user = User::findByEmailID($this->email);
-            //$this->_user = User::findOne(['EmailID'=>$this->email,'Role'=>4]);
         }
 
         return $this->_user;

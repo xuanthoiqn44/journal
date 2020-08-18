@@ -13,6 +13,8 @@ class ResetPasswordForm extends Model
 {
 
     public $password;
+    public $confirmPassword;
+    public $isReset = true;
 
     /**
      * @var \app\models\User
@@ -28,18 +30,11 @@ class ResetPasswordForm extends Model
      */
     public function __construct($token, $config = [])
     {
-        if (empty($token) || !is_string($token)) {
-            //throw new InvalidParamException('Password reset token cannot be blank.');
-            throw new \yii\web\HttpException(404, 'Password reset token cannot be blank.');
-        }
-
         $this->_user = User::findByPasswordResetToken($token);
-
         if (!$this->_user) {
-            //throw new InvalidParamException('Wrong password reset token.');
-            throw new \yii\web\HttpException(404, 'Wrong password reset token.');
+            $this->isReset = false;
+            // throw new \yii\web\HttpException(404, 'Wrong password reset token.');
         }
-
         parent::__construct($config);
     }
 
@@ -51,17 +46,13 @@ class ResetPasswordForm extends Model
         $rules = [
             [['password'],'filter','filter'=>'\yii\helpers\HtmlPurifier::process'],
             ['password', 'required'],
+            [['confirmPassword'],'required','message'=>"Confirm Password cannot be blank"],
             ['password','match', 'pattern'=>"/^([a-zA-Z0-9]+)$/", 'message'=>"Passwords is invalid"],
             ['password','match', 'pattern'=>"/^(?=.*[0-9])(?=.*[A-Z])/", 'message'=>"Passwords must have at least one upper-case letter and at least one digit"],
             ['password', 'string', 'min' => 6],
+            ['confirmPassword', 'compare', 'compareAttribute'=>'password', 'message'=>"Passwords don't match" ],
         ];
         return array_merge(parent::rules(),$rules);
-        /*return [
-            ['password', 'required'],
-            ['password','match', 'pattern'=>"/^([a-zA-Z0-9]+)$/", 'message'=>"Passwords is invalid"],
-            ['password','match', 'pattern'=>"/^(?=.*[0-9])(?=.*[A-Z])/", 'message'=>"Passwords must have at least one upper-case letter and at least one digit"],
-            ['password', 'string', 'min' => 6],
-        ];*/
     }
 
     /**

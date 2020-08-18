@@ -52,25 +52,33 @@ $config = [
             'targets' => [
                 [
                     'class' => 'yii\log\FileTarget',
-                    'levels' => ['error', 'warning'],
+                    'levels' => ['info', 'error', 'warning'],
+                    'logFile' => '@app/runtime/logs/journal.log',
                 ],
             ],
         ],
         'db' => $db,
         'urlManager' => [
+            'class' => 'codemix\localeurls\UrlManager',
+            'languages' => ['vi', 'en'],
+            'enableDefaultLanguageUrlCode' => false,
             //'baseUrl' => $baseUrl,
             'enablePrettyUrl' => true,
             'showScriptName' => false,
-            //'suffix' => '.html',
+            // 'suffix' => '.html',
             'enableStrictParsing' => false,
             'rules' => [
+                'writers/page/<page:\d+>' => 'site/writers',
+                'reviews/page/<page:\d+>' => 'site/reviews',
+                'writers/id/<id:\d+>' => 'site/writers',
+                'language/hl/<hl:\d+>' => 'site/language',
+                'order/writer_id/<writer_id:\d+>' => 'site/order',
+
                 'my-order/page/<page:\d+>' => 'user/my-order',
                 'my-order/id/<id:\d+>' => 'user/my-order',
                 'my-order-completed/<id:\d+>' => 'user/my-order-completed',
                 'feedbacks/page/<page:\d+>' => 'user/feedbacks',
-                'reviews/page/<page:\d+>' => 'site/reviews',
-                'writers/id/<id:\d+>' => 'site/writers',
-                'order/writer_id/<writer_id:\d+>' => 'site/order',
+                
                 'admin/all-post/id/<id:\d+>' => 'admin/all-post',
                 //'admin/all-post/id/<id:\d+>' => 'admin/all-post',
                 'admin/all-post/page/<page:\d+>' => 'admin/all-post',
@@ -88,9 +96,8 @@ $config = [
                 'manage-editor/accept/token/<token:\d+>' => 'manage-editor/accept',
                 'manage-editor/manage-post/id/<id:\d+>' => 'manage-editor/manage-post',
 
-                'writers/page/<page:\d+>' => 'site/writers',
-                '<alias:index|about|contact|login|writing-service|review|order|step-form2|proofreading|math-science|copywriting|rewriting|editing|reviews|prices|discounts|writers|completed>' => 'site/<alias>',
-                '<alias:register|request-password-reset|reset-password|verify-account>' => 'account/<alias>',
+                '<alias:index|about|contact|writing-service|review|order|step-form2|proofreading|math-science|copywriting|rewriting|editing|reviews|prices|discounts|writers|completed>' => 'site/<alias>',
+                '<alias:register|login|request-password-reset|reset-password|verify-account>' => 'account/<alias>',
                 '<alias:profile|manage-post|my-order|feedbacks|my-order-completed>' => 'user/<alias>',
                 'admin/<alias:index|all-post|editor|info-editor|file-editor|all-editor|login|manage-user|salary-editor|detail-salary-post>' => 'admin/<alias>',
                 '<alias:index>' => 'sample/<alias>',
@@ -109,13 +116,29 @@ $config = [
         ],
         'queue' => [
             'class' => yii\queue\file\Queue::className(),
+            'strictJobType' => false,
+            'serializer' => \yii\queue\serializers\JsonSerializer::class,
+            'path' => '@runtime/queues',
             'as log' => \yii\queue\LogBehavior::className(),
-            //'class' => \yii\queue\sync\Queue::className(),
-            //'handle' => true, // whether tasks should be executed immediately,
+            'ttr' => 5 * 60, // Max time for anything job handling 
+            'attempts' => 3, // Max number of attempts
+            // 'class' => \yii\queue\sync\Queue::className(),
+            // 'handle' => true, // whether tasks should be executed immediately,
             /*'commandOptions' => [
                 'isolate' => false,
             ],*/
         ],
+        'i18n' => [
+            'translations' => [
+                'app*' => [
+                    'class' => 'yii\i18n\PhpMessageSource',
+                    'basePath' => '@app/translation',
+                    'fileMap' => [
+                         'app' => 'app.php',
+                    ],
+                ],
+            ],
+         ],
 
     ],
     'params' => $params,

@@ -9,26 +9,14 @@
 namespace app\controllers;
 
 
-use app\models\AdminLoginForm;
-use app\models\AllPostCompletedSearch;
-use app\models\AllPostSearch;
-use app\models\AllStatisticSalaryPostSearch;
-use app\models\Editor;
 use app\models\EditorLoginForm;
-use app\models\EditorSearchAdmin;
-use app\models\FeedbackSearchAdmin;
 use app\models\GetFile;
 use app\models\Post;
-use app\models\RegisterForm;
-use app\models\RequestEditorSearchAdmin;
 use app\models\SendMail;
 use app\models\UploadFile;
-use app\models\User;
 use app\models\UserProfile;
-use app\models\UserSearchAdmin;
 use yii\web\Controller;
 use yii\filters\AccessControl;
-use yii\filters\VerbFilter;
 use Yii;
 use yii\data\Pagination;
 use yii\web\UploadedFile;

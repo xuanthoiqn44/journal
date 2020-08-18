@@ -1,0 +1,109 @@
+[1mdiff --git a/controllers/SiteController.php b/controllers/SiteController.php[m
+[1mindex 6fbfb64..a203ed0 100755[m
+[1m--- a/controllers/SiteController.php[m
+[1m+++ b/controllers/SiteController.php[m
+[36m@@ -4,18 +4,12 @@[m [mnamespace app\controllers;[m
+ use app\commands\Verify_Order;[m
+ use app\models\Feedback;[m
+ use app\models\Prices;[m
+[31m-[m
+[31m-use app\models\SaveTmpPost;[m
+[31m-use app\models\SendMail;[m
+ use app\models\ServicePrice;[m
+ use app\models\TmpPost;[m
+ use app\models\UploadFile;[m
+ use app\models\User;[m
+ use app\models\WritersSearch;[m
+[31m-use Faker\Provider\File;[m
+ use yii\helpers\ArrayHelper;[m
+[31m-use yii\helpers\Console;[m
+[31m-use yii\web\Request;[m
+ use app\models\Editor;[m
+ use app\models\OrderPost;[m
+ use app\models\RegisterForm;[m
+[36m@@ -27,10 +21,9 @@[m [muse yii\web\Response;[m
+ use yii\filters\VerbFilter;[m
+ use app\models\LoginForm;[m
+ use app\models\Post;[m
+[32m+[m[32muse Exception;[m
+ use yii\data\Pagination;[m
+[31m-use yii\data\ActiveDataProvider;[m
+ use yii\web\UploadedFile;[m
+[31m-use yii\helpers\Inflector;[m
+ [m
+ [m
+ class SiteController extends Controller[m
+[36m@@ -421,19 +414,17 @@[m [mclass SiteController extends Controller[m
+ [m
+     public function actionReviews()[m
+     {[m
+[31m-        $query_tb_review = Feedback::find();[m
+[31m-        $pagination_review = new Pagination([[m
+[32m+[m[32m        $with = array([m
+[32m+[m[32m            'post.user'[m
+[32m+[m[32m        );[m
+[32m+[m[32m        $reviews = Feedback::find();[m
+[32m+[m[32m        $pagination = new Pagination([[m
+             'defaultPageSize' => 10,[m
+[31m-            'totalCount' => $query_tb_review->count(),[m
+[32m+[m[32m            'totalCount' => $reviews->count(),[m
+         ]);[m
+[31m-        $feedback = $query_tb_review[m
+[31m-            ->with(['post.user'])[m
+[31m-            //->where(['Status_feedback' => 1])[m
+[31m-            ->offset($pagination_review->offset)[m
+[31m-            ->limit($pagination_review->limit)[m
+[31m-            ->all();[m
+[32m+[m[32m        $feedback = Feedback::Pagination($reviews, $pagination, $with);[m
+ [m
+[31m-        return $this->render('reviews', ['reviews' => $feedback, 'pagination_reviews' => $pagination_review]);[m
+[32m+[m[32m        return $this->render('reviews', ['reviews' => $feedback, 'pagination_reviews' => $pagination]);[m
+     }[m
+ [m
+     public function actionPrices()[m
+[36m@@ -480,26 +471,26 @@[m [mclass SiteController extends Controller[m
+ [m
+     public function actionWriters($id = null)[m
+     {[m
+[31m-        $searchModel = new WritersSearch();[m
+[31m-        if ($id != null) {[m
+[31m-            $AboutEditor = Editor::getEditorById($id);[m
+[31m-            $query_tb_review = Post::find();[m
+[31m-            $pagination_review = new Pagination([[m
+[31m-                'defaultPageSize' => 10,[m
+[31m-                'totalCount' => $query_tb_review->count(),[m
+[31m-            ]);[m
+[31m-            $feedback = $query_tb_review[m
+[31m-                ->with(['user','feedback'])[m
+[31m-                ->where([/*'Status_feedback' => 1, */'Id_Editor' => $id])[m
+[31m-                ->offset($pagination_review->offset)[m
+[31m-                ->limit($pagination_review->limit)[m
+[31m-                ->all();[m
+[31m-[m
+[31m-            return $this->render('AboutWriter', ['reviews' => $feedback, 'pagination_reviews' => $pagination_review, 'AboutEditor' => $AboutEditor]);[m
+[31m-        } else {[m
+[31m-            $dataProvider = $searchModel->search(Yii::$app->request->queryParams);[m
+[31m-            return $this->render('writers', ['dataProvider' => $dataProvider, 'searchModel' => $searchModel]);[m
+[32m+[m[32m        $search = new WritersSearch();[m
+[32m+[m[32m        if (isNull($id)) {[m
+[32m+[m[32m            $dataProvider = $search->search(Yii::$app->request->queryParams);[m
+[32m+[m[32m            return $this->render('writers', ['dataProvider' => $dataProvider, 'searchModel' => $search]);[m
+         }[m
+[32m+[m[32m        $AboutEditor = Editor::getEditorById($id);[m
+[32m+[m[32m        $query_tb_review = Post::find();[m
+[32m+[m[32m        $pagination_review = new Pagination([[m
+[32m+[m[32m            'defaultPageSize' => 10,[m
+[32m+[m[32m            'totalCount' => $query_tb_review->count(),[m
+[32m+[m[32m        ]);[m
+[32m+[m[32m        $feedback = $query_tb_review[m
+[32m+[m[32m            ->with(['user','feedback'])[m
+[32m+[m[32m            ->where([/*'Status_feedback' => 1, */'Id_Editor' => $id])[m
+[32m+[m[32m            ->offset($pagination_review->offset)[m
+[32m+[m[32m            ->limit($pagination_review->limit)[m
+[32m+[m[32m            ->all();[m
+[32m+[m
+[32m+[m[32m        return $this->render('AboutWriter', ['reviews' => $feedback, 'pagination_reviews' => $pagination_review, 'AboutEditor' => $AboutEditor]);[m
+[32m+[m[41m        [m
+     }[m
+ [m
+     public function renderPartial($view, $params = [])[m

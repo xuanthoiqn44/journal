@@ -9,9 +9,9 @@ use yii\helpers\Url;
 use yii\bootstrap\Nav;
 use yii\bootstrap\NavBar;
 use yii\widgets\Breadcrumbs;
-use app\assets\AppAsset;
+use app\assets\AdminAsset;
 
-$asset =  AppAsset::register($this);
+$asset =  AdminAsset::register($this);
 $baseUrl = $asset->baseUrl;
 ?>
 <?php $this->beginPage() ?>
@@ -28,9 +28,11 @@ $baseUrl = $asset->baseUrl;
     <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:400,700|Material+Icons" />
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css">
 
-    <?php //echo Html::cssFile($asset->baseUrl.'/assets/admin/demo/demo.css')?>
-    <?= Html::cssFile($asset->baseUrl.'/css/site.css')?>
-    <?php echo Html::cssFile($asset->baseUrl.'/assets/admin/css/material-dashboard.css')?>
+    <?php 
+        foreach($asset->css as $key=> $value){
+            echo Html::cssFile("$baseUrl".'/'."$value");
+        }
+    ?>
 
     <!-- CSS Files-->
     <?= Html::csrfMetaTags() ?>
@@ -161,14 +163,11 @@ $baseUrl = $asset->baseUrl;
 
 
 <!--   Core JS Files   -->
-<?php //echo Html::jsFile($asset->baseUrl.'/assets/admin/demo/demo.js')?>
-<?php //echo Html::jsFile($asset->baseUrl.'/assets/admin/js/material-dashboard.js')?>
-<?php //echo Html::jsFile($asset->baseUrl.'/assets/admin/js/plugins/bootstrap-notify.js')?>
-<?php //echo Html::jsFile($asset->baseUrl.'/assets/admin/js/core/popper.min.js')?>
-<?php //echo Html::jsFile($asset->baseUrl.'/assets/admin/js/core/bootstrap-material-design.min.js')?>
-<?php //echo Html::jsFile($asset->baseUrl.'/assets/admin/js/plugins/moment.min.js')?>
-<?php //echo Html::jsFile($asset->baseUrl.'/assets/admin/js/plugins/sweetalert2.js')?>
-<?php //echo Html::jsFile($asset->baseUrl.'/assets/admin/js/plugins/jasny-bootstrap.min.js')?>
+<?php 
+    foreach($asset->js as $key=> $value){
+        echo Html::jsFile("$baseUrl".'/'."$value");
+    }
+?>
 
 <?php $this->endBody() ?>
 </body>

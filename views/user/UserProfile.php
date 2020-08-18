@@ -10,8 +10,8 @@ $this->title = 'Profile';
 
             <?php $form = ActiveForm::begin(['id' => 'profile-user']); ?>
             <span class="login100-form-title p-b-33">
-                        Profile
-                    </span>
+                <?=\Yii::t('app', 'Profile')?>
+            </span>
             <?= $form->field($model, 'FirstName')->textInput(['autofocus' => true]) ?>
             <?= $form->field($model, 'LastName')->textInput(['autofocus' => true]) ?>
             <?= $form->field($model, 'EmailID')->textInput(['autofocus' => true,'disabled'=>true]) ?>
@@ -20,7 +20,7 @@ $this->title = 'Profile';
             <?= $form->field($model, 'ConfirmPassword')->passwordInput() ?>
             <div class="container-login100-form-btn m-t-20">
 
-                <?= Html::submitButton('Save', ['class' => 'btn btn-primary', 'name' => 'pf-button']) ?>
+                <?= Html::submitButton(\Yii::t('app', 'Save'), ['class' => 'btn btn-primary', 'name' => 'pf-button']) ?>
             </div>
             <?php ActiveForm::end(); ?>
     </div>

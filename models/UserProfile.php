@@ -35,15 +35,18 @@ class UserProfile extends Model
             ['Password','validatePassword'],
         ];
         return array_merge(parent::rules(),$rules);
-        /*return [
-            [['FirstName','LastName'], 'required'],
-            ['Password', 'string', 'min' => 6],
-            ['ConfirmPassword', 'compare', 'compareAttribute'=>'Password', 'message'=>"Passwords don't match" ],
-            ['Password','match', 'pattern'=>"/^([a-zA-Z0-9]+)$/", 'message'=>"Passwords is invalid"],
-            ['Password','match', 'pattern'=>"/^(?=.*[0-9])(?=.*[A-Z])/", 'message'=>"Passwords must have at least one upper-case letter and at least one digit"],
-
-            ['Password','validatePassword'],
-        ];*/
+    }
+    public function attributeLabels()
+    {
+        $attribute = [
+            'FirstName' => \Yii::t('app', 'First Name'),
+            'LastName' => \Yii::t('app', 'Last Name'),
+            'Password' => \Yii::t('app', 'Password'),
+            'ConfirmPassword' => \Yii::t('app', 'Confirm Password'),
+            'EmailID' => \Yii::t('app', 'Email ID'),
+            'Phone_Number' => \Yii::t('app', 'Phone Number'),
+        ];
+        return array_merge(parent::attributeLabels(), $attribute);   
     }
 
     public function getUser($id)

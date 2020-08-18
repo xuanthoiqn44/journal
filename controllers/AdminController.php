@@ -16,6 +16,7 @@ use app\models\AllPostSearch;
 use app\models\AllStatisticSalaryPostSearch;
 use app\models\Editor;
 use app\models\EditorSearchAdmin;
+use app\models\Feedback;
 use app\models\FeedbackSearchAdmin;
 use app\models\GetFile;
 use app\models\Post;
@@ -28,9 +29,8 @@ use app\models\UserProfile;
 use app\models\UserSearchAdmin;
 use yii\web\Controller;
 use yii\filters\AccessControl;
-use yii\filters\VerbFilter;
 use Yii;
-use yii\data\Pagination;
+use yii\web\Response;
 use yii\web\UploadedFile;
 
 
@@ -317,10 +317,19 @@ class AdminController extends Controller
         }
 
     }
-    public function actionIndex($id = null)
+    public function actionIndex()
     {
-                $this->layout = 'admin';
-                return $this->render('index');
+        try {
+            $this->layout = 'admin';
+            $data['user_total'] = User::find()->count();
+            $data['post_total'] = Post::find()->count();
+            $data['editor_total'] = Editor::find()->count();
+            $data['feedback_total'] = Feedback::find()->count();
+            return $this->render('index', $data);
+        }catch(\Exception $e) {
+            Yii::$app->response->format = Response::FORMAT_JSON;
+            return ['error' => $e];
+        }
     }
     public function actionDetailSalaryPost($id)
     {

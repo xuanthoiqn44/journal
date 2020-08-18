@@ -32,18 +32,21 @@ $baseUrl = $asset->baseUrl;
 <?php $this->beginBody() ?>
 <div class="wrap">
     <div class="header-area">
-
+        <div class="container">
+            <?= Yii\helpers\Html::a(Html::img('@web/img/language/vi_lang.png', ['class' => '']), '/vi'); ?>
+            <?= Yii\helpers\Html::a(Html::img('@web/img/language/en_lang.png', ['class' => '']), '/en'); ?>
+        </div>
         <div class="order-login">
-        <a href= "<?php echo Yii::$app->urlManager->createAbsoluteUrl('site/order'); ?>" class="btn _order">Order</a>
+        <a href= "<?php echo Yii::$app->urlManager->createAbsoluteUrl('site/order'); ?>" class="btn _order"><?php echo \Yii::t('app', 'Order')?></a>
             <?php  if (Yii::$app->user->isGuest){ ?>
         <!--<a href= "<?php echo Yii::$app->urlManager->createAbsoluteUrl('site/login'); ?>" class="btn _login">Login</a>-->
-                <a href="javascript:void(0);" class="btn _login" onclick="login();return false;">Login</a>
+                <a href="javascript:void(0);" class="btn _login" onclick="login();return false;"><?=\Yii::t('app', 'Login')?></a>
             <?php }else { ?>
             <div class="_usname">
                 <?php
                 echo Html::beginForm(['/site/logout'], 'post')
                     . Html::submitButton(
-                        'Logout',['class'=>'btn _login']
+                        \Yii::t('app', 'Logout'),['class'=>'btn _login']
                     )
                     . Html::endForm()
                 ?>
@@ -61,35 +64,35 @@ $baseUrl = $asset->baseUrl;
     ]);
 
     echo Nav::widget([
-        'options' => ['class' => 'navbar-nav navbar-left menu','id'=>'nav-menu-user'],
+        'options' => ['class' => 'navbar-nav navbar-left menu'],
         'items' => [
             [
-                'label' => 'Services',
+                'label' => \Yii::t('app', 'Services'),
                 'options'=>['class'=>'dropdown'],
                 'template' => '<a href="{url}" class="href_class">{label}</a>',
                 'items' => [
-                    ['label' => 'Writing services', 'url' => ['site/writing-service']],
-                    ['label' => 'Proofreading', 'url' => ['site/proofreading']],
-                    ['label' => 'Math/Science', 'url' => ['site/math-science']],
-                    ['label' => 'Copywriting', 'url' => ['site/copywriting']],
-                    ['label' => 'Rewriting', 'url' => ['site/rewriting']],
-                    ['label' => 'Editing', 'url' => ['site/editing']],
+                    ['label' => \Yii::t('app', 'Writing services'), 'url' => ['site/writing-service']],
+                    ['label' => \Yii::t('app', 'Proofreading'), 'url' => ['site/proofreading']],
+                    ['label' => \Yii::t('app', 'Math/Science'), 'url' => ['site/math-science']],
+                    ['label' => \Yii::t('app', 'Copywriting'), 'url' => ['site/copywriting']],
+                    ['label' => \Yii::t('app', 'Rewriting'), 'url' => ['site/rewriting']],
+                    ['label' => \Yii::t('app', 'Editing'), 'url' => ['site/editing']],
                 ]
             ],
-            ['label' => 'Prices', 'url' => ['site/prices']],
+            ['label' => \Yii::t('app', 'Prices'), 'url' => ['site/prices']],
             //['label' => 'Samples', 'url' => ['/sample']],
-            ['label' => 'Reviews', 'url' => ['site/reviews']],
-            ['label' => 'Discount', 'url' => ['site/discounts']],
-            ['label' => 'Our writers', 'url' => ['site/writers']],
-            ['label' => 'About us','url' => ['site/about-us']],
+            ['label' => \Yii::t('app', 'Reviews'), 'url' => ['site/reviews']],
+            ['label' => \Yii::t('app', 'Discount'), 'url' => ['site/discounts']],
+            ['label' => \Yii::t('app', 'Our writers'), 'url' => ['site/writers']],
+            ['label' => \Yii::t('app', 'About us'),'url' => ['site/about-us']],
         ],
     ]);
         echo Nav::widget([
         'options' => ['class' => 'navbar-nav navbar-left menu','id'=>'nav-user'],
         'items' => [
-        ['label' => 'Profile', 'url' => ['user/profile']],
-        ['label' => 'My Orders', 'url' => ['user/my-order']],
-        ['label' => 'My Feedbacks', 'url' => ['user/feedbacks']],
+        ['label' => \Yii::t('app', 'Profile'), 'url' => ['user/profile']],
+        ['label' => \Yii::t('app', 'My Orders'), 'url' => ['user/my-order']],
+        ['label' => \Yii::t('app', 'My Feedbacks'), 'url' => ['user/feedbacks']],
         ],
         ]);
         NavBar::end();?>

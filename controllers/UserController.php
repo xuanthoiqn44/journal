@@ -10,7 +10,6 @@ namespace app\controllers;
 
 use app\models\Editor;
 use app\models\GetFile;
-use app\models\OrderPost;
 use app\models\Post;
 use app\models\RatingForm;
 use app\models\ReWriteForm;
@@ -136,6 +135,7 @@ class UserController extends Controller
     public function actionProfile()
     {
         $this->layout = "user";
+        $is_profile = true;
         $model = new UserProfile();
             $model->getUser(yii::$app->user->identity->getId());
             if ($model->load(Yii::$app->request->post()) && $model->validate() && $model->saveData())
@@ -143,7 +143,7 @@ class UserController extends Controller
                 Yii::$app->session->setFlash('success', 'Update profile success.');
                 return $this->refresh();
             }
-            return $this->render('UserProfile' ,['model'=>$model]);
+            return $this->render('UserProfile' ,['model'=>$model, 'is_profile' => $is_profile]);
     }
     public function actionCompleted()
     {

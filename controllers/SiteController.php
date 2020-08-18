@@ -2,6 +2,7 @@
 
 namespace app\controllers;
 use app\commands\Verify_Order;
+use app\Helpers\NganLuongPayment;
 use app\models\Feedback;
 use app\models\Prices;
 
@@ -17,6 +18,7 @@ use yii\helpers\ArrayHelper;
 use yii\helpers\Console;
 use yii\web\Request;
 use app\models\Editor;
+use app\models\LoginForm;
 use app\models\OrderPost;
 use app\models\RegisterForm;
 use yii\widgets\ActiveForm;
@@ -25,7 +27,6 @@ use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\web\Response;
 use yii\filters\VerbFilter;
-use app\models\LoginForm;
 use app\models\Post;
 use yii\data\Pagination;
 use yii\data\ActiveDataProvider;
@@ -74,9 +75,10 @@ class SiteController extends Controller
             'captcha' => [
                 'class' => 'yii\captcha\CaptchaAction',
                 'fixedVerifyCode' => YII_ENV_TEST ? 'testme' : null,
-            ],
+            ]
         ];
     }
+    
 
     public function actionError()
     {
@@ -97,57 +99,6 @@ class SiteController extends Controller
     public function actionIndex()
     {
         return $this->render('index');
-    }
-
-    /**
-     * Login action.
-     *
-     * @return Response|string
-     */
-    public function actionLogin()
-    {
-        $model = new LoginForm();
-        if (!Yii::$app->user->isGuest) {
-            return $this->goHome();
-        } else if (Yii::$app->request->isAjax) {
-            if ($model->load(Yii::$app->request->post())) {
-                if ($model->login()) {
-                    return $this->redirect(Yii::$app->request->referrer);
-                } else {
-                    Yii::$app->response->format = Response::FORMAT_JSON;
-                    return ActiveForm::validate($model);
-                }
-            }
-            $model->password = '';
-            /*return $this->render('login', [
-                'model' => $model,
-            ]);*/
-            return $this->renderAjax('_login', [
-                'model' => $model,
-            ]);
-        }
-        else{
-            $this->layout = "main";
-            if ($model->load(Yii::$app->request->post())) {
-                if ($model->login()) {
-                    return $this->redirect(Yii::$app->request->referrer);
-                } else {
-                    //Yii::$app->response->format = Response::FORMAT_JSON;
-                    //return ActiveForm::validate($model);
-                    return $this->render('login', [
-                        'model' => $model,
-                    ]);
-                }
-            }
-            $model->password = '';
-            /*return $this->render('login', [
-                'model' => $model,
-            ]);*/
-            return $this->render('login', [
-                'model' => $model,
-            ]);
-        }
-
     }
 
     /**
@@ -235,34 +186,26 @@ class SiteController extends Controller
                     $session['total_prices'] = $model->total_prices;
                     Yii::$app->response->format = Response::FORMAT_JSON;
                     if (is_numeric($model->total_prices)) {
-                        return $response = [
+                        return [
                             'data' => [$model->total_prices, $model->number_of_page[0]],
                             'success' => 'true'
                         ];
-                    } else {
-                        return $response = [
-                            'data' => 'error',
-                            'error' => 'true'
-                        ];
                     }
+                    return [
+                        'data' => 'error',
+                        'error' => 'true'
+                    ];
                 } else {
-                    //$this->addError($model->getErrors());
                     Yii::$app->response->format = Response::FORMAT_JSON;
                     return ActiveForm::validate($model);
-                }
+                } 
             }
         }else if ($model_register->load(Yii::$app->request->post())){
             if ($user = $model_register->Register() && $model_register->sendEmail()) {
                 Yii::$app->session->setFlash('success', 'Please check your email for active account.');
-                //if (Yii::$app->getUser()->login($user))
-                //{
-                 //   return $this->goHome();
-                //}
                 return $this->refresh();
             }
             else{
-                //Yii::$app->response->format = Response::FORMAT_JSON;
-                //return ActiveForm::validate($model);
                 return $this->render('order', [
                     'model' => $model,'model_register'=>$model_register]);
             }
@@ -289,35 +232,23 @@ class SiteController extends Controller
                             # code...
                             $model->order_code = microtime();
                             $model->payment_method = "ATM ONLINE";
-                            $result = Yii::$app->NLGateway->purchase([
-                                'payment_method' => 'ATM_ONLINE',
-                                'bank_code' => $bank_code,
-                                'buyer_mobile' => Yii::$app->user->identity->getPhoneNumber(),
-                                'order_description' => $model->topic,
-                                'buyer_fullname' => $user->getUsername(),
-                                'time_limit'=>10,
-                                'buyer_email' => $user->getEmail(),
-                                'total_amount' => $model->total_prices,
-                                //'total_amount' =>5000,
-                                'order_code' => $model->order_code,
-                                'cur_code' => $model->id_type_of_currency,
-                                'cancel_url' => Yii::$app->urlManager->createAbsoluteUrl('order'),
-                                'return_url' => Yii::$app->urlManager->createAbsoluteUrl('completed')
-                            ]);
-                            if ($result->isOk) {
-                                $model->token_order = $result->token;
+                            $nganLuongPayment = new NganLuongPayment();
+                            $nganLuongPayment->bank_code = $bank_code;
+                            $nganLuongPayment->method = 'ATM_ONLINE';
+                            $nganLuongPayment->purchase($model);
+                            if ($nganLuongPayment->result->isOk) {
+                                $model->token_order = $nganLuongPayment->result->token;
                                 $model->SaveTmpPost();
                                 $get_order_tmp = TmpPost::findOne(['Token_Order'=>$model->token_order]);
                                 $insert_order = new OrderPost();
                                 $insert_order->SavePost($get_order_tmp->Topic,$get_order_tmp->Id_Author,$get_order_tmp->Type_of_services,$get_order_tmp->Type_of_paper,$get_order_tmp->Subject_area,$get_order_tmp->Type_of_currency,$get_order_tmp->PageNumbers,$get_order_tmp->File_Name,$get_order_tmp->Date_Create,$get_order_tmp->Deadline,$get_order_tmp->Id_Editor,$get_order_tmp->Price,$get_order_tmp->Status,$get_order_tmp->Token_Order,$get_order_tmp->Order_Code,$get_order_tmp->Payment_Method,$get_order_tmp->Decription,$get_order_tmp->Day,$get_order_tmp->Writer_Level,$get_order_tmp->Customer_Service);
-                                //$model->SavePost($model->topic,yii::$app->user->identity->getId(),$model->type_of_service,$model->type_of_paper,$model->subject_area,$model->Type_of_currency,$model->number_of_page,$model->file,date('Y-m-d H:i:s'),'2018-12-20',$model->id_writer,$model->total_prices,'New','asefasefasefasefasefasef','61253dfagsyuhefjk',$model->payment_method);
-                                Yii::$app->response->redirect($result->checkout_url);
+                                Yii::$app->response->redirect($nganLuongPayment->result->checkout_url);
                                 Yii::$app->queue->delay(12*60)->push(new Verify_Order([
                                     //'function'=>'verify_order',
-                                    'token'=>$result->token,
+                                    'token'=>$nganLuongPayment->result->token,
                                 ]));
                             } else {
-                                Yii::$app->session->setFlash('error', $result->description);
+                                Yii::$app->session->setFlash('error', $nganLuongPayment->result->description);
                                 return $this->render('order', [
                                     'model' => $model
                                 ]);
@@ -332,36 +263,24 @@ class SiteController extends Controller
                     } else {
                         $model->order_code = microtime();
                         $model->payment_method = "NGAN LUONG";
-                        $result = Yii::$app->NLGateway->purchase([
-                            'payment_method' => 'NL',
-                            'bank_code' => 'NL',
-                            'time_limit'=>10,
-                            'order_description' => $model->topic,
-                            'buyer_fullname' => $user->getUsername(),
-                            'buyer_email' => $user->getEmail(),
-                            'buyer_mobile' => Yii::$app->user->identity->getPhoneNumber(),
-                            'total_amount' => $model->total_prices,
-                            //'total_amount' =>5000,
-                            'order_code' => $model->order_code,
-                            'cur_code' => $model->id_type_of_currency,
-                            'cancel_url' => Yii::$app->urlManager->createAbsoluteUrl('order'),
-                            'return_url' => Yii::$app->urlManager->createAbsoluteUrl('completed')
-                        ]);
-                        if ($result->isOk) {
-                            $model->token_order = $result->token;
+                        $nganLuongPayment = new NganLuongPayment();
+                        $nganLuongPayment->bank_code = 'NL';
+                        $nganLuongPayment->method = 'NL';
+                        $nganLuongPayment->purchase($model);
+                        if ($nganLuongPayment->result->isOk) {
+                            $model->token_order = $nganLuongPayment->result->token;
                             $model->SaveTmpPost();
                             $get_order_tmp = TmpPost::findOne(['Token_Order'=>$model->token_order]);
                             $insert_order = new OrderPost();
                             $insert_order->SavePost($get_order_tmp->Topic,$get_order_tmp->Id_Author,$get_order_tmp->Type_of_services,$get_order_tmp->Type_of_paper,$get_order_tmp->Subject_area,$get_order_tmp->Type_of_currency,$get_order_tmp->PageNumbers,$get_order_tmp->File_Name,$get_order_tmp->Date_Create,$get_order_tmp->Deadline,$get_order_tmp->Id_Editor,$get_order_tmp->Price,$get_order_tmp->Status,$get_order_tmp->Token_Order,$get_order_tmp->Order_Code,$get_order_tmp->Payment_Method,$get_order_tmp->Decription,$get_order_tmp->Day,$get_order_tmp->Writer_Level,$get_order_tmp->Customer_Service);
-                            //$model->SavePost($model->topic,yii::$app->user->identity->getId(),$model->type_of_service,$model->type_of_paper,$model->subject_area,'a',$model->number_of_page,$model->file,date('Y-m-d H:i:s'),'2018-12-20',$model->id_writer,'1000000','New','asefasefasefasefasefasef','61253dfagsyuhefjk','NL');
-                            Yii::$app->response->redirect($result->checkout_url);
+                            Yii::$app->response->redirect($nganLuongPayment->result->checkout_url);
                             Yii::$app->queue->delay(12*60)->push(new Verify_Order([
                                 //'function'=>'verify_order',
-                                'token'=>$result->token,
+                                'token'=>$nganLuongPayment->result->token,
                             ]));
                         } else {
 
-                            Yii::$app->session->setFlash('error', $result->description);
+                            Yii::$app->session->setFlash('error', $nganLuongPayment->result->description);
                             return $this->render('order', [
                                 'model' => $model
                             ]);
@@ -390,7 +309,6 @@ class SiteController extends Controller
             return $this->render('order', [
                 'model' => $model,'model_register'=>$model_register]);
         }
-
 
     }
 
@@ -428,7 +346,6 @@ class SiteController extends Controller
         ]);
         $feedback = $query_tb_review
             ->with(['post.user'])
-            //->where(['Status_feedback' => 1])
             ->offset($pagination_review->offset)
             ->limit($pagination_review->limit)
             ->all();
@@ -441,8 +358,8 @@ class SiteController extends Controller
         $model = new Prices();
         $model->type_of_writer = 30;
         $type_of_writer = ArrayHelper::map(ServicePrice::findByServiceId('4'), 'Id', 'Name_Service_Price');
-        $get_urgency = ServicePrice::findByServiceId('7');//ArrayHelper::map(ServicePrice::findByServiceId('7'), 'Id', 'Name_Service_Price');
-        $currency = ServicePrice::findByServiceId('11');//ArrayHelper::map(ServicePrice::findByServiceId('11'), 'Id', 'Name_Service_Price');
+        $get_urgency = ServicePrice::findByServiceId('7');
+        $currency = ServicePrice::findByServiceId('11');
         if (Yii::$app->request->isAjax) {
             if ($model->load(Yii::$app->request->post())) {
                 if ($model->validate()) {
@@ -451,11 +368,8 @@ class SiteController extends Controller
                     $price = array();
                     foreach ($get_urgency as $price_sv) {
                         if ($model->type_of_writer == '31') {
-                            //$price_service = ArrayHelper::map(ServicePrice::findByServiceId('7'), 'Id', 'Price_VN');
-                            //array_push($list_price,array($price_sv->Name_Service_Price => $price_sv->Price_USA * $currency[0]->Price_VN));
                             $price += [$price_sv->Name_Service_Price => $price_sv->Price_USA * $currency[0]->Price_VN];
                         } else if ($model->type_of_writer == '30') {
-                            //array_push($list_price,array($price_sv->Name_Service_Price => $price_sv->Price_USA* $currency[0]->Price_USA));
                             $price += [$price_sv->Name_Service_Price => $price_sv->Price_USA* $currency[0]->Price_USA];
                         }
                     }
@@ -490,7 +404,7 @@ class SiteController extends Controller
             ]);
             $feedback = $query_tb_review
                 ->with(['user','feedback'])
-                ->where([/*'Status_feedback' => 1, */'Id_Editor' => $id])
+                ->where(['Id_Editor' => $id])
                 ->offset($pagination_review->offset)
                 ->limit($pagination_review->limit)
                 ->all();
@@ -514,7 +428,6 @@ class SiteController extends Controller
         $query_tb_review = Feedback::find();
         $feedback = $query_tb_review
             ->with(['post.user'])
-            //->where(['Status_feedback' => 1])
             ->all();
         return $this->getView()->render($view, ['reviews' => $feedback]);
     }

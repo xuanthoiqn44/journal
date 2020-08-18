@@ -2,7 +2,6 @@
 
 namespace app\models;
 
-use Yii;
 use yii\base\Model;
 
 /**
@@ -11,6 +10,10 @@ use yii\base\Model;
 class PasswordResetRequestForm extends Model
 {
     public $EmailID;
+    const IS_EMAIL_VERIFIED = 1;
+    const EMAIL_VERIFIED_EXPIRED = 1;
+    const EMAIL_VERIFIED = 0;
+    private $_user = false;
 
     /**
      * @inheritdoc
@@ -22,30 +25,58 @@ class PasswordResetRequestForm extends Model
             ['EmailID', 'trim'],
             ['EmailID', 'required'],
             ['EmailID', 'email'],
+            ['EmailID', 'validateEmail'],
         ];
         return array_merge(parent::rules(),$rules);
-        /*return [
-            ['EmailID', 'trim'],
-            ['EmailID', 'required'],
-            ['EmailID', 'email'],
-            ['EmailID', 'exist',
-                'targetClass' => '\app\models\User',
-                //'filter' => ['status' => User::STATUS_ACTIVE],
-                'message' => 'There is no user with such email.'
-            ],
-        ];*/
+    }
+    /**
+     * Validates the email.
+     * This method serves as the inline validation for email.
+     *
+     * @param string $attribute the attribute currently being validated
+     * @param array $params the additional name-value pairs given in the rule
+     */
+    public function validateEmail($attribute, $params)
+    {
+        if (!$this->hasErrors()) {
+            $user = $this->getUser();
+
+            if ($user)
+            {
+                if (!$user->getActive())
+                {
+                    $this->addError($attribute, \Yii::t('app', 'Please verify email first.'));
+                }
+            }
+            else
+            {
+                $this->addError($attribute, \Yii::t('app', 'Incorrect email.'));
+            }
+        }
+    }
+    /**
+     * Finds account by [[username]]
+     *
+     * @return User|null
+     */
+    public function getUser()
+    {
+        if ($this->_user === false) {
+            $this->_user = User::findByEmailID($this->EmailID);
+        }
+
+        return $this->_user;
     }
 
     /**
      * Sends an email with a link, for resetting the password.
      *
-     * @return bool whether the email was send
+     * @return object|false whether the email was send
      */
-    public function sendEmail()
+    public function resetPassword()
     {
         /* @var $user User */
         $user = User::findOne([
-            //'status' => User::STATUS_ACTIVE,
             'EmailID' => $this->EmailID,
         ]);
 
@@ -55,21 +86,16 @@ class PasswordResetRequestForm extends Model
 
         if (!User::isPasswordResetTokenValid($user->Password_reset_token)) {
             $user->generatePasswordResetToken();
-            if (!$user->save()) {
-                return false;
-            }
+            return $user->save() ? $user : false;
         }
-
-        return Yii::$app
-            ->mailer
-            ->compose(
-                ['html' => 'passwordResetToken-html', 'text' => 'passwordResetToken-text'],
-                ['user' => $user]
-            )
-            ->setFrom([Yii::$app->params['supportEmail'] => 'VietYoung support'])
-            ->setTo($this->EmailID)
-            ->setSubject('Password reset ')
-            ->send();
+        return false;
+    }
+    public function attributeLabels()
+    {
+        $attribute = [
+            'EmailID' => \Yii::t('app', 'Email ID'),
+        ];
+        return array_merge(parent::attributeLabels(), $attribute);   
     }
 
 }

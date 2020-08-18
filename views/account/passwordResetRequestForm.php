@@ -3,7 +3,7 @@
 use yii\helpers\Html;
 use yii\bootstrap\ActiveForm;
 
-$this->title = 'Request password reset';
+$this->title = \Yii::t('app', 'Request password reset');
 //$this->params['breadcrumbs'][] = $this->title;
 ?>
 
@@ -21,7 +21,7 @@ $this->title = 'Request password reset';
 
             <div class="container-login100-form-btn m-t-20">
 
-                <?= Html::submitButton('Reset', ['class' => 'login100-form-btn', 'name' => 'reset-button']) ?>
+                <?= Html::submitButton(\Yii::t('app', 'Reset'), ['class' => 'login100-form-btn', 'name' => 'reset-button']) ?>
             </div>
             <?php ActiveForm::end(); ?>
         </div>
